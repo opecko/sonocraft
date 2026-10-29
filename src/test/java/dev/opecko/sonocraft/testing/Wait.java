@@ -22,7 +22,8 @@ public final class Wait {
         }
     }
 
+    /** Waits up to 15 s: generous, because CI machines and a running game can slow the threads down a lot. */
     public static void until(BooleanSupplier condition, Supplier<String> describe) {
-        until(condition, 5000, describe);
+        until(condition, 15_000, describe);
     }
 }

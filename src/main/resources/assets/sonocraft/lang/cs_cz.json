@@ -124,7 +124,7 @@
   "sonocraft.hud.sample.artist": "Interpret",
   "sonocraft.hud.sample.album": "Album",
   "sonocraft.editor.title": "Editor HUD",
-  "sonocraft.editor.hint": "Táhni pro přesun · Kolečkem změníš velikost (%s %%)",
+  "sonocraft.editor.hint": "Táhni pro přesun · Klikni na část pro úpravu · Kolečkem změníš velikost (%s %%)",
   "sonocraft.editor.preset.minimal": "Minimální",
   "sonocraft.editor.preset.compact": "Kompaktní",
   "sonocraft.editor.preset.full": "Plný",
@@ -334,5 +334,7 @@
   "sonocraft.ui.state.connected": "Připojeno",
   "sonocraft.ui.state.cooldown": "Nepřipojeno",
   "sonocraft.ui.state.blocked": "Zablokováno",
-  "sonocraft.ui.state.stopped": "Vyžaduje pozornost"
+  "sonocraft.ui.state.stopped": "Vyžaduje pozornost",
+  "sonocraft.config.hud.panel": "Panel",
+  "sonocraft.config.hud.background_opacity": "Průhlednost pozadí"
 }

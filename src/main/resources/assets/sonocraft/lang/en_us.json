@@ -124,7 +124,7 @@
   "sonocraft.hud.sample.artist": "Artist",
   "sonocraft.hud.sample.album": "Album",
   "sonocraft.editor.title": "HUD editor",
-  "sonocraft.editor.hint": "Drag to move · Scroll to resize (%s %%)",
+  "sonocraft.editor.hint": "Drag to move · Click a part to edit it · Scroll to resize (%s %%)",
   "sonocraft.editor.preset.minimal": "Minimal",
   "sonocraft.editor.preset.compact": "Compact",
   "sonocraft.editor.preset.full": "Full",
@@ -334,5 +334,7 @@
   "sonocraft.ui.state.connected": "Connected",
   "sonocraft.ui.state.cooldown": "Not connected",
   "sonocraft.ui.state.blocked": "Blocked",
-  "sonocraft.ui.state.stopped": "Needs attention"
+  "sonocraft.ui.state.stopped": "Needs attention",
+  "sonocraft.config.hud.panel": "Panel",
+  "sonocraft.config.hud.background_opacity": "Background opacity"
 }

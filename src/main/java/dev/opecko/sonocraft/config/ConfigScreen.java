@@ -60,7 +60,7 @@ public final class ConfigScreen {
                                 .build())
                         .build())
                 .category(hudCategory(c.hud, parent))
-                .category(elementsCategory(c.hud))
+                .category(elementsCategory(c.hud, parent))
                 .category(ConfigCategory.createBuilder()
                         .name(t("theme"))
                         .option(Option.<ThemeManager.Mode>createBuilder()
@@ -117,17 +117,7 @@ public final class ConfigScreen {
         return ConfigCategory.createBuilder()
                 .name(t("hud"))
                 .option(bool("hud.enabled", d.enabled, () -> h.enabled, v -> h.enabled = v))
-                .option(ButtonOption.createBuilder()
-                        .name(t("hud.editor"))
-                        .description(OptionDescription.of(t("hud.editor.description")))
-                        .action((screen, option) -> {
-                            Screen open = Mc.screen();
-                            // in our YACL screen: rebuild it on return, the editor changes values its options hold;
-                            // inside OneConfig's UI: go back to OneConfig, not to a YACL screen it never showed
-                            Supplier<Screen> back = open == null || open == screen ? () -> create(parent) : () -> open;
-                            Mc.setScreen(new HudEditorScreen(back));
-                        })
-                        .build())
+                .option(editorButton(parent))
                 .option(enumOption("hud.connection_status", SonocraftConfig.StatusVisibility.class, d.connectionStatus,
                         () -> h.connectionStatus, v -> h.connectionStatus = v))
                 .group(OptionGroup.createBuilder()
@@ -169,11 +159,28 @@ public final class ConfigScreen {
                 .build();
     }
 
-    private static ConfigCategory elementsCategory(HudConfig h) {
+    /** "Open HUD editor…", in both HUD categories. */
+    private static ButtonOption editorButton(Screen parent) {
+        return ButtonOption.createBuilder()
+                .name(t("hud.editor"))
+                .description(OptionDescription.of(t("hud.editor.description")))
+                .action((screen, option) -> {
+                    Screen open = Mc.screen();
+                    // in our YACL screen: rebuild it on return, the editor changes values its options hold;
+                    // inside OneConfig's UI: go back to OneConfig, not to a YACL screen it never showed
+                    Supplier<Screen> back = open == null || open == screen ? () -> create(parent) : () -> open;
+                    Mc.setScreen(new HudEditorScreen(back));
+                })
+                .build();
+    }
+
+    private static ConfigCategory elementsCategory(HudConfig h, Screen parent) {
         HudConfig d = new HudConfig();
         return ConfigCategory.createBuilder()
                 .name(t("elements"))
+                .option(editorButton(parent))
                 .group(OptionGroup.createBuilder()
+                        .collapsed(true)
                         .name(t("elements.art"))
                         .option(bool("elements.art.enabled", d.art.enabled, () -> h.art.enabled, v -> h.art.enabled = v))
                         .option(intSlider("elements.art.size", 16, 128, 2, d.art.size, () -> h.art.size,
@@ -183,6 +190,7 @@ public final class ConfigScreen {
                         .option(bool("elements.art.shadow", d.art.shadow, () -> h.art.shadow, v -> h.art.shadow = v))
                         .build())
                 .group(OptionGroup.createBuilder()
+                        .collapsed(true)
                         .name(t("elements.icon"))
                         .option(bool("elements.icon.enabled", d.icon.enabled, () -> h.icon.enabled, v -> h.icon.enabled = v))
                         .option(intSlider("elements.icon.size", 6, 32, 1, d.icon.size, () -> h.icon.size,
@@ -192,6 +200,7 @@ public final class ConfigScreen {
                 .group(textGroup("artist", h.artist))
                 .group(textGroup("album", h.album))
                 .group(OptionGroup.createBuilder()
+                        .collapsed(true)
                         .name(t("elements.time"))
                         .option(bool("elements.time.enabled", d.time.enabled, () -> h.time.enabled, v -> h.time.enabled = v))
                         .option(floatSlider("elements.time.scale", d.time.scale, () -> h.time.scale, v -> h.time.scale = v))
@@ -199,6 +208,7 @@ public final class ConfigScreen {
                                 () -> h.time.format, v -> h.time.format = v))
                         .build())
                 .group(OptionGroup.createBuilder()
+                        .collapsed(true)
                         .name(t("elements.lyrics"))
                         .option(bool("elements.lyrics.enabled", d.lyrics.enabled, () -> h.lyrics.enabled,
                                 v -> h.lyrics.enabled = v))
@@ -216,6 +226,7 @@ public final class ConfigScreen {
                                 v -> h.lyrics.width = v, v -> v == 0 ? t("elements.bar.width.auto") : Component.literal(v + " px")))
                         .build())
                 .group(OptionGroup.createBuilder()
+                        .collapsed(true)
                         .name(t("elements.bar"))
                         .option(bool("elements.bar.enabled", d.bar.enabled, () -> h.bar.enabled, v -> h.bar.enabled = v))
                         .option(intSlider("elements.bar.width", 0, 400, 10, d.bar.width, () -> h.bar.width,
@@ -228,6 +239,7 @@ public final class ConfigScreen {
 
     private static OptionGroup textGroup(String name, HudConfig.Text text) {
         return OptionGroup.createBuilder()
+                .collapsed(true)
                 .name(t("elements." + name))
                 .option(bool("elements.text.enabled", true, () -> text.enabled, v -> text.enabled = v))
                 .option(floatSlider("elements.text.scale", 1f, () -> text.scale, v -> text.scale = v))

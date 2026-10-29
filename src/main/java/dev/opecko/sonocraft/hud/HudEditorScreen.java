@@ -5,6 +5,11 @@ import dev.opecko.sonocraft.SonocraftCore;
 import dev.opecko.sonocraft.compat.Gfx;
 import dev.opecko.sonocraft.compat.Mc;
 import dev.opecko.sonocraft.config.HudConfig;
+import dev.opecko.sonocraft.hud.editor.HudElement;
+import dev.opecko.sonocraft.hud.editor.SettingsPanel;
+import dev.opecko.sonocraft.ui.UiColors;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Supplier;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
@@ -14,15 +19,29 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 
 /**
- * Moves and resizes the HUD (PLAN §5.2): drag the panel, scroll to scale, snaps to the screen edges and centre.
- * Shows sample texts when nothing is playing. Changes apply live and are saved when the screen closes.
+ * Edits the HUD on screen (PLAN §5.2): drag the panel to move it (it snaps to the screen edges and centre), scroll
+ * to scale it, click a part of it (artwork, title, time, lyrics…) to show that part's settings beside it, or the
+ * panel's background for the panel's own. The chips at the top switch parts on and off. Shows sample texts when
+ * nothing is playing. Changes apply live and are saved when the screen closes.
  */
 public final class HudEditorScreen extends Screen {
     private static final int MARGIN = 4;
     private static final int SNAP = 6;
     private static final int GUIDE = 0x60FFFFFF;
 
+    /** Moving the mouse this far with the button down turns a click into a drag. */
+    private static final int DRAG_START = 3;
+    private static final int CHIPS_Y = 4;
+    /** Parts checked for a click, front ones first; PANEL when none matches. */
+    private static final HudElement[] HIT_ORDER = {
+        HudElement.ICON, HudElement.TITLE, HudElement.ARTIST, HudElement.ALBUM, HudElement.TIME, HudElement.BAR,
+        HudElement.ART, HudElement.LYRICS};
+
     private final Supplier<Screen> back;
+    private final SettingsPanel panel = new SettingsPanel();
+    private boolean pressed;
+    private double pressX;
+    private double pressY;
     private boolean dragging;
     private float grabX;
     private float grabY;
@@ -41,6 +60,100 @@ public final class HudEditorScreen extends Screen {
 
     private static HudLayout layout() {
         return SonocraftCore.get().hud.layout();
+    }
+
+    private static int accent() {
+        return SonocraftCore.get().theme.palette(System.currentTimeMillis()).accent();
+    }
+
+    private void select(HudElement element) {
+        panel.show(element, element.settings(config()));
+    }
+
+    /** The part of the HUD under the mouse, PANEL for its background, or null outside it. */
+    private HudElement elementAt(double mx, double my) {
+        if (!inside(mx, my)) {
+            return null;
+        }
+        HudLayout l = layout();
+        double lx = (mx - l.screenX) / l.scale;
+        double ly = (my - l.screenY) / l.scale;
+        for (HudElement e : HIT_ORDER) {
+            int[] r = e.rect(l);
+            if (r != null && lx >= r[0] && ly >= r[1] && lx < r[0] + r[2] && ly < r[1] + r[3]) {
+                return e;
+            }
+        }
+        return HudElement.PANEL;
+    }
+
+    /** Outlines a part of the HUD in screen coordinates. */
+    private static void outline(Gfx g, HudElement e, int color) {
+        HudLayout l = layout();
+        int[] r = e.rect(l);
+        if (r == null) {
+            return;
+        }
+        int x1 = Math.round(l.screenX + r[0] * l.scale) - 1;
+        int y1 = Math.round(l.screenY + r[1] * l.scale) - 1;
+        int x2 = Math.round(l.screenX + (r[0] + r[2]) * l.scale) + 1;
+        int y2 = Math.round(l.screenY + (r[1] + r[3]) * l.scale) + 1;
+        g.fill(x1, y1, x2, y1 + 1, color);
+        g.fill(x1, y2 - 1, x2, y2, color);
+        g.fill(x1, y1, x1 + 1, y2, color);
+        g.fill(x2 - 1, y1, x2, y2, color);
+    }
+
+    // chips at the top: one per part, filled when the part is on
+    private final List<int[]> chips = new ArrayList<>();
+
+    private void drawChips(Gfx g, int mouseX, int mouseY) {
+        chips.clear();
+        HudElement[] all = HudElement.values();
+        int total = 0;
+        for (HudElement e : all) {
+            total += g.textWidth(e.label()) + 10 + 3;
+        }
+        int x = Math.max(4, (width - total) / 2);
+        for (HudElement e : all) {
+            int w = g.textWidth(e.label()) + 10;
+            boolean on = e.enabled(config());
+            boolean selected = panel.element() == e;
+            boolean hover = mouseX >= x && mouseX < x + w && mouseY >= CHIPS_Y && mouseY < CHIPS_Y + 14;
+            int bg = on ? (selected ? accent() : 0x60000000) : 0x30000000;
+            g.fill(x, CHIPS_Y, x + w, CHIPS_Y + 14, bg);
+            if (hover) {
+                g.fill(x, CHIPS_Y, x + w, CHIPS_Y + 14, 0x30FFFFFF);
+            }
+            if (selected && !on) {
+                g.fill(x, CHIPS_Y + 13, x + w, CHIPS_Y + 14, accent());
+            }
+            g.text(e.label(), x + 5, CHIPS_Y + 3, on ? UiColors.TEXT : UiColors.TEXT_FAINT, false);
+            chips.add(new int[] {x, w, e.ordinal()});
+            x += w + 3;
+        }
+    }
+
+    /** A click on a chip selects the part; a second click on a selected part switches it on or off. */
+    private boolean clickChip(double mx, double my) {
+        if (my < CHIPS_Y || my >= CHIPS_Y + 14) {
+            return false;
+        }
+        for (int[] c : chips) {
+            if (mx >= c[0] && mx < c[0] + c[1]) {
+                HudElement e = HudElement.values()[c[2]];
+                if (panel.element() == e && e != HudElement.PANEL) {
+                    e.setEnabled(config(), !e.enabled(config()));
+                } else {
+                    select(e);
+                    if (!e.enabled(config())) {
+                        e.setEnabled(config(), true);
+                    }
+                }
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -112,15 +225,21 @@ public final class HudEditorScreen extends Screen {
         }
         SonocraftCore.get().hud.renderPreview(g);
         HudLayout l = layout();
-        int x1 = Math.round(l.screenX) - 1;
-        int y1 = Math.round(l.screenY) - 1;
-        int x2 = Math.round(l.screenX + l.width * l.scale) + 1;
-        int y2 = Math.round(l.screenY + l.height * l.scale) + 1;
-        int outline = dragging || inside(mouseX, mouseY) ? 0xFFFFFFFF : 0x80FFFFFF;
-        g.fill(x1, y1, x2, y1 + 1, outline);
-        g.fill(x1, y2 - 1, x2, y2, outline);
-        g.fill(x1, y1, x1 + 1, y2, outline);
-        g.fill(x2 - 1, y1, x2, y2, outline);
+        long now = System.currentTimeMillis();
+        boolean overPanel = panel.contains(mouseX, mouseY);
+        outline(g, HudElement.PANEL, dragging || (!overPanel && inside(mouseX, mouseY)) ? 0xFFFFFFFF : 0x80FFFFFF);
+        HudElement hovered = dragging || overPanel ? null : elementAt(mouseX, mouseY);
+        if (hovered != null && hovered != HudElement.PANEL && hovered != panel.element()) {
+            outline(g, hovered, 0x80FFFFFF);
+        }
+        if (panel.element() != null && panel.element() != HudElement.PANEL) {
+            outline(g, panel.element(), accent());
+        }
+        drawChips(g, mouseX, mouseY);
+        // the settings sit on the other side of the screen from the HUD, so they never cover it
+        boolean hudLeft = l.screenX + l.width * l.scale / 2 < width / 2f;
+        panel.place(hudLeft ? width - SettingsPanel.WIDTH - 6 : 6, CHIPS_Y + 20, height - 50);
+        panel.render(g, mouseX, mouseY, now, HudEditorScreen::accent);
         g.centeredText(Component.translatable("sonocraft.editor.hint", Math.round(config().scale * 100)),
                 width / 2, height - 42, 0xFFFFFFFF);
     }
@@ -136,9 +255,14 @@ public final class HudEditorScreen extends Screen {
         if (super.mouseClicked(event, doubleClick)) {
             return true;
         }
+        if (panel.mouseClicked(event.x(), event.y(), event.button()) || clickChip(event.x(), event.y())) {
+            return true;
+        }
         // not a literal 0: 26.3 uses SDL button numbers, where the left button is 1
         if (event.button() == InputConstants.MOUSE_BUTTON_LEFT && inside(event.x(), event.y())) {
-            dragging = true;
+            pressed = true;
+            pressX = event.x();
+            pressY = event.y();
             grabX = (float) event.x() - layout().screenX;
             grabY = (float) event.y() - layout().screenY;
             return true;
@@ -148,6 +272,12 @@ public final class HudEditorScreen extends Screen {
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
+        if (panel.mouseDragged(event.x(), event.y(), event.button())) {
+            return true;
+        }
+        if (pressed && !dragging && Math.hypot(event.x() - pressX, event.y() - pressY) >= DRAG_START) {
+            dragging = true;
+        }
         if (!dragging) {
             return super.mouseDragged(event, dx, dy);
         }
@@ -175,8 +305,20 @@ public final class HudEditorScreen extends Screen {
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
-        if (dragging) {
-            dragging = false;
+        if (panel.mouseReleased(event.x(), event.y(), event.button())) {
+            return true;
+        }
+        if (pressed) {
+            pressed = false;
+            if (dragging) {
+                dragging = false;
+            } else {
+                // a click without moving selects the part under the mouse
+                HudElement e = elementAt(event.x(), event.y());
+                if (e != null) {
+                    select(e);
+                }
+            }
             return true;
         }
         return super.mouseReleased(event);
@@ -186,6 +328,9 @@ public final class HudEditorScreen extends Screen {
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         if (scrollY == 0) {
             return false;
+        }
+        if (panel.mouseScrolled(mouseX, mouseY, scrollY)) {
+            return true;
         }
         HudConfig c = config();
         HudLayout l = layout();
