@@ -16,6 +16,7 @@ import java.util.concurrent.CompletionException;
 import java.util.function.Supplier;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -47,6 +48,11 @@ public final class Keybinds {
         toggleHud = key("toggle_hud", InputConstants.UNKNOWN.getValue());
         hudEditor = key("hud_editor", InputConstants.UNKNOWN.getValue());
         ClientTickEvents.END_CLIENT_TICK.register(mc -> tick());
+    }
+
+    /** The library key, as the player bound it; the open library closes on it too. */
+    public static boolean isLibraryKey(KeyEvent event) {
+        return library != null && library.matches(event);
     }
 
     private static KeyMapping key(String name, int code) {

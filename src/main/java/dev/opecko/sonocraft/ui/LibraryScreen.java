@@ -869,6 +869,10 @@ public final class LibraryScreen extends Screen implements UiContext {
         if (super.keyPressed(event)) {
             return true;
         }
+        if (!typing && dev.opecko.sonocraft.input.Keybinds.isLibraryKey(event)) {
+            onClose(); // the key that opened the library closes it
+            return true;
+        }
         if (!typing && key == InputConstants.KEY_BACKSPACE && stack.size() > 1) {
             back();
             return true;

@@ -19,7 +19,15 @@ group = prop("mod.group")
 base.archivesName = prop("mod.id")
 
 repositories {
-    // YACL: Modrinth has every build we need (3.8.2 for 1.21.11 is not on isXander's maven)
+    // YACL from isXander's maven: its POM lists the libraries YACL bundles. Modrinth's POM doesn't, and the
+    // remapping Loom (1.21.11) then starts a dev client without them (NoClassDefFoundError in YACL)
+    maven("https://maven.isxander.dev/releases") {
+        content { includeGroup("dev.isxander") }
+    }
+    maven("https://maven.quiltmc.org/repository/release") {
+        content { includeGroupAndSubgroups("org.quiltmc") }
+    }
+    // OneConfig and its dev-only dependencies
     maven("https://api.modrinth.com/maven") {
         content { includeGroup("maven.modrinth") }
     }
@@ -32,7 +40,7 @@ dependencies {
     "minecraft"("com.mojang:minecraft:$minecraft")
     modImplementation("net.fabricmc:fabric-loader:${prop("deps.fabric_loader")}")
     modImplementation("net.fabricmc.fabric-api:fabric-api:${prop("deps.fabric_api")}")
-    modImplementation("maven.modrinth:yacl:${prop("deps.yacl")}")
+    modImplementation("dev.isxander:yet-another-config-lib:${prop("deps.yacl")}")
     // optional: only the entrypoint uses it; present at dev runtime to test the config button
     modCompileOnly("com.terraformersmc:modmenu:${prop("deps.modmenu")}")
     modLocalRuntime("com.terraformersmc:modmenu:${prop("deps.modmenu")}")
