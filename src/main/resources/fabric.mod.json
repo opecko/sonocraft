@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "${id}",
+  "version": "${version}",
+  "name": "${name}",
+  "description": "Now Playing HUD and full in-game client for Sonolith (YouTube Music desktop app).",
+  "authors": [
+    "opecko"
+  ],
+  "contact": {
+    "sources": "https://github.com/opecko/sonocraft",
+    "issues": "https://github.com/opecko/sonocraft/issues"
+  },
+  "license": "MIT",
+  "icon": "assets/sonocraft/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "dev.opecko.sonocraft.SonocraftClient"
+    ],
+    "modmenu": [
+      "dev.opecko.sonocraft.config.ModMenuIntegration"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=${loader}",
+    "minecraft": "${minecraft}",
+    "java": ">=${java}",
+    "fabric-api": "*",
+    "yet_another_config_lib_v3": "*"
+  },
+  "suggests": {
+    "modmenu": "*"
+  }
+}
