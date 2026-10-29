@@ -14,6 +14,7 @@ public final class SonocraftConfig {
     public HudConfig hud = new HudConfig();
     public Controls controls = new Controls();
     public Theme theme = new Theme();
+    public Library library = new Library();
     /** The one-time "connect to Sonolith" hint has been shown. */
     public boolean onboardingShown;
 
@@ -25,6 +26,11 @@ public final class SonocraftConfig {
     public static final class Controls {
         /** Action bar message after a playback key ("Paused", "Next"). */
         public boolean feedback = true;
+    }
+
+    public static final class Library {
+        /** Pause a singleplayer game while the Library screen is open. */
+        public boolean pauseGame = false;
     }
 
     public static final class Theme {
@@ -53,6 +59,9 @@ public final class SonocraftConfig {
         hud.normalize();
         if (controls == null) {
             controls = new Controls();
+        }
+        if (library == null) {
+            library = new Library();
         }
         if (theme == null) {
             theme = new Theme();

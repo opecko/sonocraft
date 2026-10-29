@@ -556,8 +556,16 @@ Zadání: knihovna, která se integruje do OneConfig, ale funguje i bez OneConfi
      `lyrics.line` jen krátká korekce, páruje se podle `startMs` (index Sonolithu počítá i řádky bez času);
      `lineIndex: null` (mezi řádky) se ignoruje. `lyrics.word` se neodebírá (slova se časují lokálně), pozice 2 Hz.
    - Dlouhý řádek: word tier sleduje zpívané slovo, line tier se posouvá podle času řádku (drží 15 % na krajích).
-8. **Library UI**: toolkit widgetů → mini přehrávač → Now Playing → Queue → Search → Library sekce → Detaily →
-   Playlisty a kontextové menu.
+8. ✅ **Library UI**: toolkit widgetů → mini přehrávač → Now Playing → Queue → Search → Library sekce → Detaily →
+   Playlisty a kontextové menu. (2026-10-29, ověřeno na 26.3)
+   - `ui.LibraryScreen` (klávesa J, `/sonocraft library`), stránky v `ui.page`, widgety v `ui.widget`.
+   - Ikony: pixelarticons (MIT, licence v `textures/gui/LICENSE-pixelarticons.txt`), 12 px; transport, ⋯ a úchyt
+     ručně kreslené na střed.
+   - Fronta: Sonolith neumí „přehraj tuto položku“ → skok dopředu přes `player.next` ×N (max 15), jinak přesun
+     za aktuální + next. „Playing from“ jen když přehrávání spustil Sonocraft (API zdroj fronty neuvádí).
+   - Stav přehrávání jen z `player.stateChanged` (`player.position` při seeku hlásí `paused`).
+   - Art: HttpClient nesmí sdílet executor se stahováním (deadlock); aktuální položka má vlastní prioritní vlákno.
+   - Odloženo: detail epizody (klik epizodu přehraje). Známý flaky test `revokedDeletesTokenAndStops` pod zátěží.
 9. **Doladění:** lokalizace, animace, výkon, edge cases, test matice, README (vč. vysvětlení identity a Javy).
 10. **Release:** Modrinth/CurseForge, jar per node, changelog.
 

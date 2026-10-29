@@ -13,6 +13,7 @@ import dev.opecko.sonocraft.platform.token.TokenStores;
 import dev.opecko.sonocraft.api.session.SubscriptionOptions;
 import dev.opecko.sonocraft.state.LyricsStore;
 import dev.opecko.sonocraft.state.PlayerStore;
+import dev.opecko.sonocraft.state.PlayingFrom;
 import net.fabricmc.loader.api.FabricLoader;
 
 /** Shared mod services (config, session, API, stores). Created at client startup. */
@@ -23,8 +24,9 @@ public final class SonocraftCore {
     public final SonolithApi api;
     public final PlayerStore player = new PlayerStore();
     public final LyricsStore lyrics = new LyricsStore();
+    public final PlayingFrom playingFrom = new PlayingFrom();
     public final ThemeManager theme = new ThemeManager();
-    public final ArtTextures art = new ArtTextures(32);
+    public final ArtTextures art = new ArtTextures(192);
     public final ArtTracker artTracker = new ArtTracker(player, art, theme);
     public final HudRenderer hud = new HudRenderer();
     private int subscribedHz;
@@ -36,6 +38,7 @@ public final class SonocraftCore {
         api = new SonolithApi(session);
         session.addListener(player);
         session.addListener(lyrics);
+        session.addListener(playingFrom);
         applyConfig();
     }
 

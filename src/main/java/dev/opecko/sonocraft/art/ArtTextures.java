@@ -42,15 +42,14 @@ public final class ArtTextures {
     private final Map<String, Long> failedAt = new HashMap<>();
     /** Rounded variants per base texture and corner radius in pixels. */
     private final Map<Identifier, Map<Integer, Identifier>> rounded = new HashMap<>();
-    private final ExecutorService executor = Executors.newFixedThreadPool(2, r -> {
-        Thread t = new Thread(r, "Sonocraft-Art-" + THREADS.incrementAndGet());
-        t.setDaemon(true);
-        return t;
-    });
+    /** Thumbnails for lists; many at once. */
+    private final ExecutorService executor = Executors.newFixedThreadPool(3, r -> daemon(r, "Sonocraft-Art-"));
+    /** The current item's artwork never waits behind a page of thumbnails. */
+    private final ExecutorService priorityExecutor = Executors.newSingleThreadExecutor(r -> daemon(r, "Sonocraft-Art-Now-"));
+    // HttpClient keeps its own executor: sharing ours deadlocked once every thread was blocked in send()
     private final HttpClient http = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
             .followRedirects(HttpClient.Redirect.NORMAL)
-            .executor(executor)
             .build();
     private BiConsumer<String, Art> onLoaded = (key, art) -> { };
     private int nextId;
@@ -68,8 +67,19 @@ public final class ArtTextures {
         return size + "@" + url;
     }
 
+    private static Thread daemon(Runnable r, String prefix) {
+        Thread t = new Thread(r, prefix + THREADS.incrementAndGet());
+        t.setDaemon(true);
+        return t;
+    }
+
     /** The art if it is ready; otherwise starts loading it (once) and returns null. */
     public Art get(String url, int size) {
+        return get(url, size, false);
+    }
+
+    /** As {@link #get(String, int)}; {@code priority} loads it ahead of list thumbnails (the playing item). */
+    public Art get(String url, int size, boolean priority) {
         if (url == null) {
             return null;
         }
@@ -84,7 +94,7 @@ public final class ArtTextures {
         }
         loading.add(key);
         String sized = ArtUrls.sized(url, size);
-        executor.execute(() -> {
+        (priority ? priorityExecutor : executor).execute(() -> {
             Pixels px = null;
             int accent = -1;
             try {
@@ -175,5 +185,6 @@ public final class ArtTextures {
 
     public void close() {
         executor.shutdownNow();
+        priorityExecutor.shutdownNow();
     }
 }

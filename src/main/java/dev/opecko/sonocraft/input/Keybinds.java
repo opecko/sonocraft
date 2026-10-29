@@ -10,6 +10,7 @@ import dev.opecko.sonocraft.compat.Mc;
 import dev.opecko.sonocraft.compat.Registrations;
 import dev.opecko.sonocraft.config.HudConfig;
 import dev.opecko.sonocraft.hud.HudEditorScreen;
+import dev.opecko.sonocraft.ui.LibraryScreen;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.function.Supplier;
@@ -30,6 +31,7 @@ public final class Keybinds {
     private static KeyMapping playPause;
     private static KeyMapping next;
     private static KeyMapping previous;
+    private static KeyMapping library;
     private static KeyMapping toggleHud;
     private static KeyMapping hudEditor;
 
@@ -40,6 +42,7 @@ public final class Keybinds {
         playPause = key("play_pause", InputConstants.KEY_MINUS);
         next = key("next", InputConstants.KEY_RBRACKET);
         previous = key("previous", InputConstants.KEY_LBRACKET);
+        library = key("library", InputConstants.KEY_J);
         // optional, unbound by default
         toggleHud = key("toggle_hud", InputConstants.UNKNOWN.getValue());
         hudEditor = key("hud_editor", InputConstants.UNKNOWN.getValue());
@@ -61,6 +64,9 @@ public final class Keybinds {
         }
         while (previous.consumeClick()) {
             run(core.api::previous, "sonocraft.feedback.previous");
+        }
+        while (library.consumeClick()) {
+            Mc.setScreen(new LibraryScreen(null));
         }
         while (toggleHud.consumeClick()) {
             HudConfig hud = core.config.get().hud;

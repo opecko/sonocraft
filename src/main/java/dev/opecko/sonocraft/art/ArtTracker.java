@@ -57,7 +57,7 @@ public final class ArtTracker {
             theme.setArtColor(-1, System.currentTimeMillis());
             return;
         }
-        ArtTextures.Art loaded = textures.get(now, size);
+        ArtTextures.Art loaded = textures.get(now, size, true);
         if (loaded != null) {
             art = loaded;
             theme.setArtColor(loaded.accent(), System.currentTimeMillis());

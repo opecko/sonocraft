@@ -512,7 +512,8 @@ public final class HudRenderer {
         }
         if (filled > 0) {
             g.scissor(x, y - 1, x + Math.round(filled), y + layout.lyricsRowHeight);
-            drawScaled(g, text, x, y, scale, 0, fade(filled >= textW ? 0xFFFFFFFF : accent.accent(), alpha));
+            // line-timed lyrics show the whole line in white; word-timed ones keep the accent to the end
+            drawScaled(g, text, x, y, scale, 0, fade(byWord ? accent.accent() : 0xFFFFFFFF, alpha));
             g.endScissor();
         }
     }

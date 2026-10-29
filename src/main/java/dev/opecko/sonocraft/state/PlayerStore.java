@@ -61,7 +61,9 @@ public final class PlayerStore implements SessionListener {
             case "player.position" -> {
                 PositionEvent e = Json.parse(params, PositionEvent.class);
                 if (e != null) {
-                    snapshot.updateAndGet(p -> new PlayerSnapshot(e.status() != null ? e.status() : p.status(),
+                    // the status comes from player.stateChanged only: a position sent in the middle of a seek can
+                    // say "paused" after the player is already playing again
+                    snapshot.updateAndGet(p -> new PlayerSnapshot(p.status(),
                             p.item(), e.positionMs(), e.positionAt(), e.durationMs(), e.rate(), p.volume(), p.muted(),
                             p.shuffle(), p.repeat(), p.canGoNext(), p.canGoPrevious()));
                 }

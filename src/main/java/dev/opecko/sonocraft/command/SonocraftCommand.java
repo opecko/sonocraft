@@ -13,6 +13,7 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import dev.opecko.sonocraft.config.ConfigScreen;
 import dev.opecko.sonocraft.hud.HudEditorScreen;
 import dev.opecko.sonocraft.ui.ConnectionScreen;
+import dev.opecko.sonocraft.ui.LibraryScreen;
 import java.util.function.Supplier;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
@@ -47,7 +48,8 @@ public final class SonocraftCommand {
                 .then(Registrations.literal("disconnect").executes(SonocraftCommand::disconnect))
                 .then(Registrations.literal("config").executes(ctx -> open(() -> ConfigScreen.create(null))))
                 .then(Registrations.literal("connection").executes(ctx -> open(() -> new ConnectionScreen(null))))
-                .then(Registrations.literal("hud").executes(ctx -> open(() -> new HudEditorScreen(() -> null)))));
+                .then(Registrations.literal("hud").executes(ctx -> open(() -> new HudEditorScreen(() -> null))))
+                .then(Registrations.literal("library").executes(ctx -> open(() -> new LibraryScreen(null)))));
     }
 
     private static int open(Supplier<Screen> screen) {
@@ -62,7 +64,6 @@ public final class SonocraftCommand {
     private static int status(CommandContext<FabricClientCommandSource> ctx) {
         SessionStatus s = session().status();
         ctx.getSource().sendFeedback(Component.literal(Sonocraft.NAME + ": ").append(Texts.status(s)));
-        ctx.getSource().sendFeedback(Component.translatable("sonocraft.command.uses_sonolith"));
         return 1;
     }
 
