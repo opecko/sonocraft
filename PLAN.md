@@ -565,7 +565,7 @@ Zadání: knihovna, která se integruje do OneConfig, ale funguje i bez OneConfi
      za aktuální + next. „Playing from“ jen když přehrávání spustil Sonocraft (API zdroj fronty neuvádí).
    - Stav přehrávání jen z `player.stateChanged` (`player.position` při seeku hlásí `paused`).
    - Art: HttpClient nesmí sdílet executor se stahováním (deadlock); aktuální položka má vlastní prioritní vlákno.
-   - Odloženo: detail epizody (klik epizodu přehraje). Známý flaky test `revokedDeletesTokenAndStops` pod zátěží.
+   - Odloženo: detail epizody (klik epizodu přehraje).
 9. **Doladění:** (2026-10-29: všechny 4 nody ověřené ve hře na Linuxu; YACL z maven.isxander.dev, protože
    Modrinth POM neuvádí přibalené knihovny a dev klient 1.21.11 bez nich padá) lokalizace, animace, výkon, edge cases, test matice, README (vč. vysvětlení identity a Javy).
 10. **Release:** Modrinth/CurseForge, jar per node, changelog.

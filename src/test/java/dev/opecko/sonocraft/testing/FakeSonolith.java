@@ -37,6 +37,8 @@ public final class FakeSonolith implements AutoCloseable {
     public volatile long retryMs = 60_000;
     /** Error returned by session.hello (e.g. "Unauthorized"), or null. */
     public volatile String helloError;
+    /** Set by {@link #revoke}: like Sonolith, the token stops working, so a reconnect gets Unauthorized. */
+    public volatile boolean revoked;
     /** How many times session.hello answers RegistrationPending (identityChanged). */
     public final AtomicInteger identityChanges = new AtomicInteger();
     /** User's answer to the identity change. */
@@ -122,6 +124,16 @@ public final class FakeSonolith implements AutoCloseable {
         return calls.stream().map(Call::method).toList();
     }
 
+    /**
+     * The user removes the app in Sonolith: the token stops working, connections get session.revoked and are
+     * closed right after (SPEC §9.2).
+     */
+    public void revoke(String reason) {
+        revoked = true;
+        push("session.revoked", obj("reason", reason));
+        dropConnections();
+    }
+
     /** Sends a notification to all connected clients. */
     public void push(String method, JsonObject params) {
         JsonObject msg = new JsonObject();
@@ -182,7 +194,7 @@ public final class FakeSonolith implements AutoCloseable {
                     error(c, id, -32000, helloError, obj());
                     return;
                 }
-                if (!TOKEN.equals(p.get("token").getAsString())) {
+                if (revoked || !TOKEN.equals(p.get("token").getAsString())) {
                     error(c, id, -32002, "Unauthorized", obj());
                     return;
                 }

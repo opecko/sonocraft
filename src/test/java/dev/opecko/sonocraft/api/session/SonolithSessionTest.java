@@ -189,14 +189,17 @@ class SonolithSessionTest {
     void revokedDeletesTokenAndStops() throws Exception {
         startSession(FakeSonolith.TOKEN);
         awaitState(SessionState.CONNECTED);
-        fake.push("session.revoked", obj("reason", "removed"));
-        fake.dropConnections();
-        Wait.until(() -> session.status().reason() == StatusReason.REVOKED_REMOVED, () -> session.status().toString());
+        fake.revoke("removed");
+        // Usually the session reads session.revoked. When the socket closes with data still unread, Linux can
+        // drop what is queued and the event is lost: then the reconnect gets Unauthorized. Both must end the same.
+        Wait.until(() -> session.status().reason() == StatusReason.REVOKED_REMOVED
+                || session.status().reason() == StatusReason.ACCESS_ENDED, () -> session.status().toString());
         assertEquals(SessionState.NOT_CONNECTED, session.status().state());
         assertNull(tokens.token());
+        int connections = fake.connections.get();
         Thread.sleep(300);
-        assertEquals(1, fake.connections.get(), "no reconnect after a revoke");
-        assertTrue(statuses.stream().noneMatch(s -> s.reason() == StatusReason.CONNECTION_LOST));
+        assertEquals(connections, fake.connections.get(), "no reconnect after the access ended");
+        assertTrue(fake.called("app.register").isEmpty(), "never registers again on its own");
     }
 
     @Test
