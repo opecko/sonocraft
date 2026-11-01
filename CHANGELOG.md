@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.1.0-beta.3
+
+### Fixes
+
+- No longer crashes at startup on Java runtimes without the `jdk.random` module, which some launchers ship ("No
+  implementation of the random number generator algorithm \"L32X64MixRandom\" is available").
+
+## 0.1.0-beta.2
+
+### Fixes
+
+- Library: the sidebar is as wide as its longest label, so "Episodes for later" and "Waiting for approval" no longer
+  get cut off.
+- HUD editor: the row of parts moves to the bottom when the HUD sits at the top edge, so it doesn't cover the HUD; the
+  bottom buttons are as wide as their labels; long settings put their value on a second line.
+- Subtitles skip empty parts ("Album · 2022" instead of "Album · · 2022").
+
 ## 0.1.0-beta.1
 
 First beta. Needs Sonolith 2.4.0 or newer with "Let other apps connect to Sonolith" on.

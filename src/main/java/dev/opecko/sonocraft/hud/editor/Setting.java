@@ -11,6 +11,8 @@ import java.util.function.Consumer;
 import java.util.function.DoubleFunction;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
 
 /** One row of the HUD editor's settings panel. Values are read and written live, so the preview follows. */
@@ -159,9 +161,19 @@ public abstract class Setting {
             this.keyPrefix = keyPrefix;
         }
 
+        private Component value() {
+            return Component.translatable(keyPrefix + get.get().name().toLowerCase(Locale.ROOT));
+        }
+
+        /** True when the label and the value don't fit on one line: the value then goes on a second line. */
+        private boolean wraps() {
+            Font font = Minecraft.getInstance().font;
+            return width > 0 && font.width(label) + 8 + font.width(value()) + 13 > width;
+        }
+
         @Override
         int height() {
-            return 14;
+            return wraps() ? 24 : 14;
         }
 
         @Override
@@ -171,11 +183,10 @@ public abstract class Setting {
                 g.fill(x, y, x + width, y + height(), UiColors.ROW_HOVER);
             }
             g.text(label, x + 3, y + 3, UiColors.TEXT, false);
-            Component value = Component.translatable(keyPrefix + get.get().name().toLowerCase(Locale.ROOT));
-            int vw = g.textWidth(value);
-            int vx = x + width - 13 - vw;
-            g.text(value, vx, y + 3, hover ? accent.getAsInt() : UiColors.TEXT_DIM, false);
-            Icon.CHEVRON_RIGHT.draw(g, x + width - 12, y + 1, hover ? UiColors.TEXT : UiColors.TEXT_FAINT);
+            Component value = value();
+            int vy = wraps() ? y + 13 : y + 3;
+            g.text(value, x + width - 13 - g.textWidth(value), vy, hover ? accent.getAsInt() : UiColors.TEXT_DIM, false);
+            Icon.CHEVRON_RIGHT.draw(g, x + width - 12, vy - 2, hover ? UiColors.TEXT : UiColors.TEXT_FAINT);
         }
 
         @Override

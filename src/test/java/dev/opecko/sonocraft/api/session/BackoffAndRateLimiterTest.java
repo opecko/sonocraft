@@ -5,13 +5,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.opecko.sonocraft.api.RateClass;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.random.RandomGenerator;
+import java.util.Random;
 import org.junit.jupiter.api.Test;
 
 class BackoffAndRateLimiterTest {
     @Test
     void backoffDoublesUpToTheCapWithJitter() {
-        Backoff b = new Backoff(1000, 60_000, 0.2, RandomGenerator.getDefault());
+        Backoff b = new Backoff(1000, 60_000, 0.2, new Random());
         long[] bases = {1000, 2000, 4000, 8000, 16_000, 32_000, 60_000, 60_000};
         for (long base : bases) {
             long d = b.next(0);
@@ -20,7 +20,7 @@ class BackoffAndRateLimiterTest {
         b.reset();
         long d = b.next(0);
         assertTrue(d <= 1201);
-        assertEquals(5000, new Backoff(1000, 60_000, 0, RandomGenerator.getDefault()).next(5000));
+        assertEquals(5000, new Backoff(1000, 60_000, 0, new Random()).next(5000));
     }
 
     @Test

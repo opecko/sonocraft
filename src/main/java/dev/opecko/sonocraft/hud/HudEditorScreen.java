@@ -106,6 +106,7 @@ public final class HudEditorScreen extends Screen {
 
     // chips at the top: one per part, filled when the part is on
     private final List<int[]> chips = new ArrayList<>();
+    private int chipsY = CHIPS_Y;
 
     private void drawChips(Gfx g, int mouseX, int mouseY) {
         chips.clear();
@@ -119,16 +120,16 @@ public final class HudEditorScreen extends Screen {
             int w = g.textWidth(e.label()) + 10;
             boolean on = e.enabled(config());
             boolean selected = panel.element() == e;
-            boolean hover = mouseX >= x && mouseX < x + w && mouseY >= CHIPS_Y && mouseY < CHIPS_Y + 14;
+            boolean hover = mouseX >= x && mouseX < x + w && mouseY >= chipsY && mouseY < chipsY + 14;
             int bg = on ? (selected ? accent() : 0x60000000) : 0x30000000;
-            g.fill(x, CHIPS_Y, x + w, CHIPS_Y + 14, bg);
+            g.fill(x, chipsY, x + w, chipsY + 14, bg);
             if (hover) {
-                g.fill(x, CHIPS_Y, x + w, CHIPS_Y + 14, 0x30FFFFFF);
+                g.fill(x, chipsY, x + w, chipsY + 14, 0x30FFFFFF);
             }
             if (selected && !on) {
-                g.fill(x, CHIPS_Y + 13, x + w, CHIPS_Y + 14, accent());
+                g.fill(x, chipsY + 13, x + w, chipsY + 14, accent());
             }
-            g.text(e.label(), x + 5, CHIPS_Y + 3, on ? UiColors.TEXT : UiColors.TEXT_FAINT, false);
+            g.text(e.label(), x + 5, chipsY + 3, on ? UiColors.TEXT : UiColors.TEXT_FAINT, false);
             chips.add(new int[] {x, w, e.ordinal()});
             x += w + 3;
         }
@@ -136,7 +137,7 @@ public final class HudEditorScreen extends Screen {
 
     /** A click on a chip selects the part; a second click on a selected part switches it on or off. */
     private boolean clickChip(double mx, double my) {
-        if (my < CHIPS_Y || my >= CHIPS_Y + 14) {
+        if (my < chipsY || my >= chipsY + 14) {
             return false;
         }
         for (int[] c : chips) {
@@ -159,7 +160,13 @@ public final class HudEditorScreen extends Screen {
     @Override
     protected void init() {
         int y = height - 28;
-        int w = 70;
+        // as wide as the longest label, so translations and large GUI scales still fit
+        int w = font.width(Component.translatable("sonocraft.editor.reset"));
+        for (HudConfig.Preset preset : HudConfig.Preset.values()) {
+            w = Math.max(w, font.width(Component.translatable(
+                    "sonocraft.editor.preset." + preset.name().toLowerCase(java.util.Locale.ROOT))));
+        }
+        w = Math.clamp(w + 12, 70, Math.max(70, (width - 8 - 4 * 4) / 5));
         int x = width / 2 - (5 * w + 4 * 4) / 2;
         for (HudConfig.Preset preset : HudConfig.Preset.values()) {
             String key = "sonocraft.editor.preset." + preset.name().toLowerCase(java.util.Locale.ROOT);
@@ -235,10 +242,14 @@ public final class HudEditorScreen extends Screen {
         if (panel.element() != null && panel.element() != HudElement.PANEL) {
             outline(g, panel.element(), accent());
         }
+        // the chips move down above the hint when the HUD sits at the top edge, so they never cover it
+        boolean chipsTop = l.screenY >= CHIPS_Y + 16;
+        chipsY = chipsTop ? CHIPS_Y : height - 62;
         drawChips(g, mouseX, mouseY);
         // the settings sit on the other side of the screen from the HUD, so they never cover it
         boolean hudLeft = l.screenX + l.width * l.scale / 2 < width / 2f;
-        panel.place(hudLeft ? width - SettingsPanel.WIDTH - 6 : 6, CHIPS_Y + 20, height - 50);
+        panel.place(hudLeft ? width - SettingsPanel.WIDTH - 6 : 6, chipsTop ? CHIPS_Y + 20 : 6,
+                chipsTop ? height - 50 : chipsY - 6);
         panel.render(g, mouseX, mouseY, now, HudEditorScreen::accent);
         g.centeredText(Component.translatable("sonocraft.editor.hint", Math.round(config().scale * 100)),
                 width / 2, height - 42, 0xFFFFFFFF);

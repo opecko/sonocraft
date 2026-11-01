@@ -61,10 +61,14 @@ import net.minecraft.network.chat.Component;
  * arrows and Enter in lists).
  */
 public final class LibraryScreen extends Screen implements UiContext {
-    private static final int SIDEBAR = 104;
+    private static final int SIDEBAR_MIN = 104;
+    private static final int SIDEBAR_MAX = 140;
     private static final int PLAYER = 42;
     private static final int TOP_BAR = 18;
     private static final int TAB_ROW = 14;
+
+    /** Sidebar width: fits the longest label (they differ by language), within SIDEBAR_MIN..SIDEBAR_MAX. */
+    private int sidebar = SIDEBAR_MIN;
 
     enum Tab {
         NOW_PLAYING(Icon.PLAY), QUEUE(Icon.QUEUE), SEARCH(Icon.SEARCH),
@@ -157,6 +161,15 @@ public final class LibraryScreen extends Screen implements UiContext {
 
     @Override
     protected void init() {
+        int label = font.width(Component.translatable("sonocraft.ui.settings"));
+        for (Tab t : Tab.values()) {
+            label = Math.max(label, font.width(tabLabel(t)) + (t == Tab.PLAYLISTS ? 16 : 0));
+        }
+        for (SessionState s : SessionState.values()) {
+            label = Math.max(label, font.width(Component.translatable(
+                    "sonocraft.ui.state." + s.name().toLowerCase(Locale.ROOT))));
+        }
+        sidebar = Math.clamp(label + 21 + 6, SIDEBAR_MIN, SIDEBAR_MAX);
         winW = Math.min(width - 20, 560);
         winH = Math.min(height - 20, 340);
         winX = (width - winW) / 2;
@@ -240,7 +253,7 @@ public final class LibraryScreen extends Screen implements UiContext {
     private void layoutPage() {
         Page page = stack.peek();
         if (page != null) {
-            page.layout(winX + SIDEBAR, winY + TOP_BAR, winW - SIDEBAR, winH - PLAYER - TOP_BAR);
+            page.layout(winX + sidebar, winY + TOP_BAR, winW - sidebar, winH - PLAYER - TOP_BAR);
         }
     }
 
@@ -450,8 +463,8 @@ public final class LibraryScreen extends Screen implements UiContext {
         drawSidebar(g, mx, my);
 
         SessionStatus status = SonocraftCore.get().session.status();
-        int cx = winX + SIDEBAR;
-        int cw = winW - SIDEBAR;
+        int cx = winX + sidebar;
+        int cw = winW - sidebar;
         Page page = stack.peek();
         if (status.state() != SessionState.CONNECTED) {
             int cy = winY + (winH - PLAYER) / 2 - 20;
@@ -533,7 +546,7 @@ public final class LibraryScreen extends Screen implements UiContext {
     }
 
     private void drawSidebar(Gfx g, int mouseX, int mouseY) {
-        g.fill(winX, winY, winX + SIDEBAR, winY + winH - PLAYER, UiColors.SIDEBAR);
+        g.fill(winX, winY, winX + sidebar, winY + winH - PLAYER, UiColors.SIDEBAR);
         List<SideRow> rows = sideRows();
         int total = 0;
         for (SideRow r : rows) {
@@ -541,27 +554,27 @@ public final class LibraryScreen extends Screen implements UiContext {
         }
         int area = sideBottom() - sideTop();
         sidebarScroll = Math.max(0, Math.min(sidebarScroll, Math.max(0, total - area)));
-        g.scissor(winX, sideTop(), winX + SIDEBAR, sideBottom());
+        g.scissor(winX, sideTop(), winX + sidebar, sideBottom());
         int y = sideTop() - (int) sidebarScroll;
         for (SideRow r : rows) {
             int h = rowHeight(r);
-            boolean hover = mouseX >= winX && mouseX < winX + SIDEBAR && mouseY >= Math.max(y, sideTop())
+            boolean hover = mouseX >= winX && mouseX < winX + sidebar && mouseY >= Math.max(y, sideTop())
                     && mouseY < Math.min(y + h, sideBottom());
             if (r.heading()) {
                 g.text(Component.translatable("sonocraft.ui.library"), winX + 8, y + 6, UiColors.TEXT_FAINT, false);
             } else if (r.playlist() != null) {
                 boolean selected = isOpen(r.playlist());
                 if (selected || hover) {
-                    g.fill(winX, y, winX + SIDEBAR, y + h, selected ? 0x30FFFFFF : UiColors.ROW_HOVER);
+                    g.fill(winX, y, winX + sidebar, y + h, selected ? 0x30FFFFFF : UiColors.ROW_HOVER);
                 }
-                g.scissor(winX + 20, y, winX + SIDEBAR - 4, y + h);
+                g.scissor(winX + 20, y, winX + sidebar - 4, y + h);
                 g.text(r.playlist().title(), winX + 20, y + 3, selected ? UiColors.TEXT : UiColors.TEXT_DIM, false);
                 g.endScissor();
             } else {
                 Tab t = r.tab();
                 boolean selected = t == tab && !(stack.peek() instanceof dev.opecko.sonocraft.ui.page.PlaylistPage);
                 if (selected || hover) {
-                    g.fill(winX, y, winX + SIDEBAR, y + h, selected ? 0x30FFFFFF : UiColors.ROW_HOVER);
+                    g.fill(winX, y, winX + sidebar, y + h, selected ? 0x30FFFFFF : UiColors.ROW_HOVER);
                 }
                 if (selected) {
                     g.fill(winX, y, winX + 2, y + h, accent().accent());
@@ -571,8 +584,8 @@ public final class LibraryScreen extends Screen implements UiContext {
                 }
                 g.text(tabLabel(t), winX + 21, y + 3, selected ? UiColors.TEXT : UiColors.TEXT_DIM, false);
                 if (t == Tab.PLAYLISTS) {
-                    boolean hoverArrow = hover && mouseX >= winX + SIDEBAR - 16;
-                    (playlistsOpen ? Icon.CHEVRON_DOWN : Icon.CHEVRON_RIGHT).draw(g, winX + SIDEBAR - 15, y + 1,
+                    boolean hoverArrow = hover && mouseX >= winX + sidebar - 16;
+                    (playlistsOpen ? Icon.CHEVRON_DOWN : Icon.CHEVRON_RIGHT).draw(g, winX + sidebar - 15, y + 1,
                             hoverArrow ? UiColors.TEXT : UiColors.TEXT_FAINT);
                 }
             }
@@ -585,23 +598,23 @@ public final class LibraryScreen extends Screen implements UiContext {
 
         // settings and the connection state at the bottom
         int by = sideBottom() + 4;
-        g.fill(winX + 6, by - 3, winX + SIDEBAR - 6, by - 2, UiColors.DIVIDER);
-        boolean hoverSettings = mouseX >= winX && mouseX < winX + SIDEBAR && mouseY >= by && mouseY < by + TAB_ROW;
+        g.fill(winX + 6, by - 3, winX + sidebar - 6, by - 2, UiColors.DIVIDER);
+        boolean hoverSettings = mouseX >= winX && mouseX < winX + sidebar && mouseY >= by && mouseY < by + TAB_ROW;
         if (hoverSettings) {
-            g.fill(winX, by, winX + SIDEBAR, by + TAB_ROW, UiColors.ROW_HOVER);
+            g.fill(winX, by, winX + sidebar, by + TAB_ROW, UiColors.ROW_HOVER);
         }
         Icon.SETTINGS.draw(g, winX + 6, by + 1, UiColors.TEXT_DIM);
         g.text(Component.translatable("sonocraft.ui.settings"), winX + 21, by + 3, UiColors.TEXT_DIM, false);
         by += TAB_ROW;
         SessionStatus st = SonocraftCore.get().session.status();
         boolean connected = st.state() == SessionState.CONNECTED;
-        boolean hoverConn = mouseX >= winX && mouseX < winX + SIDEBAR && mouseY >= by && mouseY < by + TAB_ROW;
+        boolean hoverConn = mouseX >= winX && mouseX < winX + sidebar && mouseY >= by && mouseY < by + TAB_ROW;
         if (hoverConn) {
-            g.fill(winX, by, winX + SIDEBAR, by + TAB_ROW, UiColors.ROW_HOVER);
+            g.fill(winX, by, winX + sidebar, by + TAB_ROW, UiColors.ROW_HOVER);
         }
         int dot = connected ? 0xFF55DD55 : st.state() == SessionState.CONNECTING ? 0xFFDDDD55 : 0xFFDD5555;
         g.fill(winX + 10, by + 5, winX + 14, by + 9, dot);
-        g.scissor(winX + 21, by, winX + SIDEBAR - 2, by + TAB_ROW);
+        g.scissor(winX + 21, by, winX + sidebar - 2, by + TAB_ROW);
         g.text(Component.translatable("sonocraft.ui.state." + st.state().name().toLowerCase(Locale.ROOT)), winX + 21,
                 by + 3, hoverConn ? UiColors.TEXT : UiColors.TEXT_DIM, false);
         g.endScissor();
@@ -679,8 +692,8 @@ public final class LibraryScreen extends Screen implements UiContext {
             banner = null;
             return;
         }
-        int cx = winX + SIDEBAR + 6;
-        int cw = winW - SIDEBAR - 12;
+        int cx = winX + sidebar + 6;
+        int cw = winW - sidebar - 12;
         int y = winY + winH - PLAYER - 22;
         int actionW = bannerAction != null ? g.textWidth(bannerAction) + 12 : 0;
         g.fill(cx, y, cx + cw, y + 18, 0xF0303030);
@@ -700,8 +713,8 @@ public final class LibraryScreen extends Screen implements UiContext {
         if (banner == null || bannerAction == null) {
             return false;
         }
-        int cx = winX + SIDEBAR + 6;
-        int cw = winW - SIDEBAR - 12;
+        int cx = winX + sidebar + 6;
+        int cw = winW - sidebar - 12;
         int y = winY + winH - PLAYER - 22;
         Minecraft mc = Minecraft.getInstance();
         int actionW = mc.font.width(bannerAction) + 12;
@@ -760,7 +773,7 @@ public final class LibraryScreen extends Screen implements UiContext {
     }
 
     private boolean clickSidebar(double mx, double my, int button) {
-        if (button != InputConstants.MOUSE_BUTTON_LEFT || mx < winX || mx >= winX + SIDEBAR || my < winY
+        if (button != InputConstants.MOUSE_BUTTON_LEFT || mx < winX || mx >= winX + sidebar || my < winY
                 || my >= winY + winH - PLAYER) {
             return false;
         }
@@ -772,7 +785,7 @@ public final class LibraryScreen extends Screen implements UiContext {
                     if (r.playlist() != null) {
                         select(Tab.PLAYLISTS);
                         open(new dev.opecko.sonocraft.ui.page.PlaylistPage(this, r.playlist()));
-                    } else if (r.tab() == Tab.PLAYLISTS && mx >= winX + SIDEBAR - 16) {
+                    } else if (r.tab() == Tab.PLAYLISTS && mx >= winX + sidebar - 16) {
                         togglePlaylists();
                     } else if (r.tab() != null) {
                         select(r.tab());
@@ -828,7 +841,7 @@ public final class LibraryScreen extends Screen implements UiContext {
         if (overlayOpen()) {
             return dialog != null && dialog.mouseScrolled(mx, my, scrollY);
         }
-        if (mx >= winX && mx < winX + SIDEBAR && my >= sideTop() && my < sideBottom()) {
+        if (mx >= winX && mx < winX + sidebar && my >= sideTop() && my < sideBottom()) {
             sidebarScroll -= scrollY * TAB_ROW * 2;
             return true;
         }

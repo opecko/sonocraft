@@ -1,5 +1,6 @@
 package dev.opecko.sonocraft.api.session;
 
+import java.util.Random;
 import java.util.random.RandomGenerator;
 
 /** Exponential backoff 1 s → 60 s with ±20 % jitter (SPEC §3.4). */
@@ -11,7 +12,9 @@ public final class Backoff {
     private long nextMs;
 
     public Backoff() {
-        this(1000, 60_000, 0.2, RandomGenerator.getDefault());
+        // Not RandomGenerator.getDefault(): its algorithm lives in the jdk.random module, which
+        // trimmed launcher runtimes may leave out (crashes at startup).
+        this(1000, 60_000, 0.2, new Random());
     }
 
     public Backoff(long initialMs, long maxMs, double jitter, RandomGenerator random) {

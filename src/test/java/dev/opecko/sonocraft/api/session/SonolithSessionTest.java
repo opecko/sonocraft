@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.random.RandomGenerator;
+import java.util.Random;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,7 +61,7 @@ class SonolithSessionTest {
 
     private void startSession(String token) {
         tokens = new MemoryTokenStore(token);
-        Backoff backoff = new Backoff(50, 200, 0, RandomGenerator.getDefault());
+        Backoff backoff = new Backoff(50, 200, 0, new Random());
         session = new SonolithSession(registration(), tokens, fake.connector(), backoff, new RateLimiter(),
                 System::currentTimeMillis);
         session.addListener(new SessionListener() {

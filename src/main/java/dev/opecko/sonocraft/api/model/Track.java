@@ -18,6 +18,6 @@ public record Track(String id, String title, List<ArtistCredit> artists, AlbumCr
 
     /** Artist names joined with a separator. */
     public String artistNames(String separator) {
-        return artists == null ? "" : artists.stream().map(ArtistCredit::name).collect(Collectors.joining(separator));
+        return artists == null ? "" : artists.stream().map(ArtistCredit::name).filter(n -> n != null && !n.isBlank()).collect(Collectors.joining(separator));
     }
 }

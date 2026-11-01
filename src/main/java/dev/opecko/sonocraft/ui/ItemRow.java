@@ -56,25 +56,21 @@ public final class ItemRow {
     /** The second line: who made it, and for collections what kind of thing it is. */
     public static Component subtitle(Item item) {
         if (item instanceof Track t) {
-            String s = t.artistNames(", ");
-            if (t.album() != null && t.album().title() != null) {
-                s = s.isEmpty() ? t.album().title() : s + " · " + t.album().title();
-            }
-            return Component.literal(s);
+            return Component.literal(Texts.dotted(t.artistNames(", "), t.album() != null ? t.album().title() : null));
         }
         if (item instanceof Episode e) {
             String by = e.podcast() != null && e.podcast().title() != null ? e.podcast().title()
                     : e.author() != null ? e.author() : "";
-            return Component.literal(e.publishedText() != null ? by + " · " + e.publishedText() : by);
+            return Component.literal(Texts.dotted(by, e.publishedText()));
         }
         String kind;
         String detail;
         if (item instanceof Album a) {
             kind = a.albumType() != null ? "sonocraft.ui.kind." + a.albumType().name().toLowerCase(Locale.ROOT)
                     : "sonocraft.ui.kind.album";
-            String artists = a.artists() == null ? "" : String.join(", ",
-                    a.artists().stream().map(c -> c.name()).toList());
-            detail = a.year() != null ? artists + " · " + a.year() : artists;
+            String artists = a.artists() == null ? "" : a.artists().stream().map(c -> c.name())
+                    .filter(n -> n != null && !n.isBlank()).collect(java.util.stream.Collectors.joining(", "));
+            detail = Texts.dotted(artists, a.year() != null ? String.valueOf(a.year()) : null);
         } else if (item instanceof Playlist p) {
             kind = "sonocraft.ui.kind.playlist";
             detail = p.author() != null ? p.author() : "";

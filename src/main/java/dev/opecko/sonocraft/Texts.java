@@ -3,10 +3,12 @@ package dev.opecko.sonocraft;
 import dev.opecko.sonocraft.api.session.SessionState;
 import dev.opecko.sonocraft.api.session.SessionStatus;
 import dev.opecko.sonocraft.api.session.StatusReason;
+import java.util.Arrays;
 import java.util.Locale;
+import java.util.stream.Collectors;
 import net.minecraft.network.chat.Component;
 
-/** Localized connection status texts. */
+/** Localized connection status texts and small text helpers. */
 public final class Texts {
     private Texts() {
     }
@@ -46,5 +48,10 @@ public final class Texts {
         long m = total / 60 % 60;
         long sec = total % 60;
         return h > 0 ? String.format(Locale.ROOT, "%d:%02d:%02d", h, m, sec) : String.format(Locale.ROOT, "%d:%02d", m, sec);
+    }
+
+    /** Joins the parts that are not null or blank with " · ". */
+    public static String dotted(String... parts) {
+        return Arrays.stream(parts).filter(p -> p != null && !p.isBlank()).collect(Collectors.joining(" · "));
     }
 }

@@ -80,15 +80,11 @@ public final class AlbumPage extends Page {
             return;
         }
         AlbumDetail d = loader.value();
-        String artists = d.artists() == null ? "" : String.join(", ", d.artists().stream().map(a -> a.name()).toList());
-        StringBuilder sub = new StringBuilder(artists);
-        if (d.year() != null) {
-            sub.append(" · ").append(d.year());
-        }
-        sub.append(" · ").append(Component.translatable("sonocraft.ui.tracks", d.trackCount()).getString());
-        if (d.durationMs() != null) {
-            sub.append(" · ").append(Texts.time(d.durationMs()));
-        }
+        String artists = d.artists() == null ? "" : d.artists().stream().map(a -> a.name())
+                .filter(n -> n != null && !n.isBlank()).collect(java.util.stream.Collectors.joining(", "));
+        String sub = Texts.dotted(artists, d.year() != null ? String.valueOf(d.year()) : null,
+                Component.translatable("sonocraft.ui.tracks", d.trackCount()).getString(),
+                d.durationMs() != null ? Texts.time(d.durationMs()) : null);
         header.render(g, ui, x, y, width, d.thumbnailUrl(), false, Component.literal(d.title()),
                 Component.literal(sub.toString()), mouseX, mouseY, now);
         list.render(g, mouseX, mouseY, now);
